@@ -2,8 +2,8 @@ package com.cowinhelper.bot.handler;
 
 import com.cowinhelper.constants.CowinConstants;
 import com.cowinhelper.entity.User;
-import com.cowinhelper.repository.UserRepository;
 import com.cowinhelper.service.NextStepHandlerCache;
+import com.cowinhelper.service.UserService;
 import com.cowinhelper.utility.MessageBuilder;
 import com.cowinhelper.utility.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ public abstract class AbstractHandler {
     protected NextStepHandlerCache nextStepHandlerCache;
 
     @Autowired
-    protected UserRepository userRepository;
+    protected UserService userService;
 
     protected void addOptionsReplyKeyboard(SendMessage message) {
         InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder().build();
@@ -70,39 +70,41 @@ public abstract class AbstractHandler {
         return null;
     }
 
-    protected void updatePincode(User user, String pincode, SendMessage message) {
+    protected void updatePincode(User user, SendMessage message, String pincode) {
         try {
             Validator.validatePincode(pincode);
-            user.setPincode(pincode);
-            userRepository.save(user);
+            userService.updatePincode(user, pincode);
+            StringBuilder msg = new StringBuilder();
             if (user.getAge() == 0) {
                 nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.GET_AGE);
-                StringBuilder msg = new StringBuilder();
                 msg.append("Please tell me your ").append(MessageBuilder.bold("AGE"));
-                message.setText(msg.toString());
             } else {
                 nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.START_OPTIONS);
+                msg.append("Pincode and age info is saved, send command /start anytime to begin");
             }
+            message.setText(msg.toString());
         } catch (Exception e) {
             message.setText(e.getMessage());
+            nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.GET_PINCODE);
         }
     }
 
-    protected void updateAge(User user, Object ageObj, SendMessage message) {
+    protected void updateAge(User user, SendMessage message, Object ageObj) {
         try {
             int age = Validator.validateAge(ageObj);
-            user.setAge(age);
-            userRepository.save(user);
+            userService.updateAge(user, age);
+            StringBuilder msg = new StringBuilder();
             if (Validator.isEmptyString(user.getPincode())) {
                 nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.GET_PINCODE);
-                StringBuilder msg = new StringBuilder();
                 msg.append("Please give me your ").append(MessageBuilder.bold("pincode"));
-                message.setText(msg.toString());
             } else {
                 nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.START_OPTIONS);
+                msg.append("Pincode and age info is saved, send command /start anytime to begin");
             }
+            message.setText(msg.toString());
         } catch (Exception e) {
             message.setText(e.getMessage());
+            nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.GET_AGE);
         }
     }
 }

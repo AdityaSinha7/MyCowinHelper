@@ -3,7 +3,6 @@ package com.cowinhelper.bot.handler;
 import com.cowinhelper.bot.MyCowinHelperBot;
 import com.cowinhelper.constants.CowinConstants;
 import com.cowinhelper.entity.User;
-import com.cowinhelper.utility.MessageBuilder;
 import com.cowinhelper.utility.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -30,17 +28,44 @@ public class UpdateHandler extends AbstractHandler {
 
     public void handleUpdate(Update update) {
         log.info("message: {}", String.valueOf(update.getMessage()));
-        // log.info("location: lat:{}, long:{}",update.getMessage().getLocation().getLatitude(),update.getMessage().getLocation().getLongitude());
         SendMessage message = new SendMessage();
         message.setParseMode("html");
 
         try {
-            if (update.hasMessage() && update.getMessage().hasText()) {
-                message.setChatId(update.getMessage().getChatId().toString());
-                handleMessages(update, message);
-            } else if (update.hasCallbackQuery() && !Validator.isEmptyString(update.getCallbackQuery().getData())) {
-                message.setChatId(update.getCallbackQuery().getFrom().getId().toString());
-                handleCallBackQueries(update, message);
+            Long userId = 0L;
+            String firstName = null;
+            String userName = null;
+            if (update.hasMessage()) {
+                userId = update.getMessage().getChatId();
+                firstName = update.getMessage().getFrom().getFirstName();
+                userName = update.getMessage().getFrom().getUserName();
+            } else if (update.hasCallbackQuery()) {
+                userId = update.getCallbackQuery().getFrom().getId();
+                firstName = update.getCallbackQuery().getFrom().getFirstName();
+                userName = update.getCallbackQuery().getFrom().getUserName();
+            } else {
+                log.error(CowinConstants.Error.SOMETHING_WENT_WRONG);
+                return;
+            }
+
+            Optional<User> user = userService.findUser(userId);
+            message.setChatId(userId.toString());
+            if (user.isPresent()) {
+                if (update.hasMessage()) {
+                    handleMessages(update, user.get(), message);
+                } else if (update.hasCallbackQuery()) {
+                    handleCallBackQueries(update, user.get(), message);
+                } else {
+                    log.error("Unknown command");
+                    return;
+                }
+            } else {
+                if (update.hasMessage() && "/delete".equalsIgnoreCase(update.getMessage().getText())) {
+                    message.setText("User not registered, please send /start command to begin");
+                }
+                //Register the new user
+                User newUser = userService.registerUser(userId, firstName, userName);
+                commandHandler.fetchInfo(newUser, message);
             }
         } catch (Exception e) {
             message.setText(e.getMessage());
@@ -52,72 +77,39 @@ public class UpdateHandler extends AbstractHandler {
         }
     }
 
-    private void handleMessages(Update update, SendMessage message) {
-        if (Objects.nonNull(update.getMessage()) && "/start".equalsIgnoreCase(update.getMessage().getText())) {
-            commandHandler.startCommand(update, message, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName());
-        } else if (Objects.nonNull(update.getMessage()) && "/delete".equalsIgnoreCase(update.getMessage().getText())) {
-            commandHandler.deleteCommand(update, message);
-        } else if (Objects.nonNull(update.getMessage()) && "/cancel".equalsIgnoreCase(update.getMessage().getText())) {
-            commandHandler.cancelCommand(update, message);
-        } else {
-            //data insertion
-            Optional<User> user = userRepository.findById(update.getMessage().getChatId());
-            String nextStep = nextStepHandlerCache.peek(update.getMessage().getChatId());
-            if (!user.isPresent()) {
-                message.setText("Please enter /start command to begin");
-            } else {
-                midSteps(user.get(), update, message, nextStep);
-            }
-//            String date = "27-05-2021";
-//            String availableMessage = MessageTemplates.availiblityMessage(cowinService.getSlotAvailablityByPincode(update.getMessage().getText(), date), date);
-//            message.setText(availableMessage);
+    //TODO : Add sharable link
+
+    private void handleMessages(Update update, User user, SendMessage message) {
+        if (CowinConstants.HandlerCacheKey.GET_PINCODE.equalsIgnoreCase(nextStepHandlerCache.peek(user.getId()))) {
+            //pincode input request
+            nextStepHandlerCache.pop(user.getId());
+            updatePincode(user, message, update.getMessage().getText());
+        } else if (CowinConstants.HandlerCacheKey.GET_AGE.equalsIgnoreCase(nextStepHandlerCache.peek(user.getId()))) {
+            //age input request
+            nextStepHandlerCache.pop(user.getId());
+            updateAge(user, message, update.getMessage().getText());
+        } else if ("/start".equalsIgnoreCase(update.getMessage().getText())) {
+            //show all 3 options
+            commandHandler.startCommand(user, message);
+        } else if ("/delete".equalsIgnoreCase(update.getMessage().getText())) {
+            //delete user info from DB
+            commandHandler.deleteCommand(user, message);
         }
     }
 
-    private void handleCallBackQueries(Update update, SendMessage message) {
-        Optional<User> user = userRepository.findById(Long.valueOf(update.getCallbackQuery().getFrom().getId().toString()));
-        if (user.isPresent()) {
-            if (CowinConstants.CallBackCommand.AVALIBLITY_CHECK.equalsIgnoreCase(update.getCallbackQuery().getData())) {
-                optionHandler.availiblityCheckOption(update, message);
-            } else if (CowinConstants.CallBackCommand.AVALIBLITY_ALERT.equalsIgnoreCase(update.getCallbackQuery().getData())) {
-                optionHandler.availiblityAlertOption(update, message);
-            } else if (CowinConstants.CallBackCommand.BOOK.equalsIgnoreCase(update.getCallbackQuery().getData())) {
-                optionHandler.bookOption(update, message);
-            } else if (CowinConstants.HandlerCacheKey.GET_PINCODE.equalsIgnoreCase(update.getCallbackQuery().getData())
-                    || CowinConstants.HandlerCacheKey.GET_AGE.equalsIgnoreCase(update.getCallbackQuery().getData())
-                    || CowinConstants.HandlerCacheKey.START_OPTIONS.equalsIgnoreCase(update.getCallbackQuery().getData())) {
-                midSteps(user.get(), update, message, update.getCallbackQuery().getData());
+    private void handleCallBackQueries(Update update, User user, SendMessage message) {
+        if (update.hasCallbackQuery() && Validator.validateAgeAndPincode(user)) {
+            //option call and we have the user data
+            if (CowinConstants.CallBackCommand.AVALIBLITY_CHECK.equals(update.getCallbackQuery().getData())) {
+                optionHandler.availiblityCheckOption(user, message);
+            } else if (CowinConstants.CallBackCommand.AVALIBLITY_ALERT.equals(update.getCallbackQuery().getData())) {
+                optionHandler.availiblityAlertOption(user, message);
+            } else if (CowinConstants.CallBackCommand.BOOK.equals(update.getCallbackQuery().getData())) {
+                optionHandler.bookOption(user, message);
             }
-        } else {
-            //if user is trying to use options without giving pincode and age info
-            commandHandler.startCommand(update, message, update.getCallbackQuery().getFrom().getFirstName(), update.getCallbackQuery().getFrom().getUserName());
-        }
-    }
-
-    private void midSteps(User user, Update update, SendMessage message, String nextStep) {
-        if (CowinConstants.HandlerCacheKey.GET_PINCODE.equalsIgnoreCase(nextStep)) {
-            if(Objects.nonNull(update.getMessage()) && !Validator.isEmptyString(update.getMessage().getText())){
-                updatePincode(user, update.getMessage().getText(), message);
-            }else {
-                StringBuilder msg = new StringBuilder();
-                msg.append("Please give me your ").append(MessageBuilder.bold("pincode"));
-                nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.GET_PINCODE);
-                message.setText(msg.toString());
-            }
-        } else if (CowinConstants.HandlerCacheKey.GET_AGE.equalsIgnoreCase(nextStep)) {
-            if(Objects.nonNull(update.getMessage()) && !Validator.isEmptyString(update.getMessage().getText())){
-                updateAge(user, update.getMessage().getText(), message);
-            }else {
-                StringBuilder msg = new StringBuilder();
-                msg.append("Please give me your ").append(MessageBuilder.bold("AGE"));
-                nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.GET_AGE);
-                message.setText(msg.toString());
-            }
-        }
-        nextStep = nextStepHandlerCache.peek(update.getMessage().getChatId());
-        if (CowinConstants.HandlerCacheKey.START_OPTIONS.equalsIgnoreCase(nextStep)) {
-            message.setText("Please select one of the below options to proceed");
-            addOptionsReplyKeyboard(message);
+        } else if (update.hasCallbackQuery() && !Validator.validateAgeAndPincode(user)) {
+            //option call but we don't have the user data
+            commandHandler.fetchInfo(user, message);
         }
     }
 

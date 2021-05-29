@@ -4,6 +4,8 @@ import com.cowinhelper.dto.Center;
 import com.cowinhelper.dto.Centers;
 import com.cowinhelper.dto.Session;
 
+import java.util.Objects;
+
 public class MessageTemplates {
     public static String welcomeMessage(String firstName) {
         StringBuilder message = new StringBuilder();
@@ -23,17 +25,21 @@ public class MessageTemplates {
     public static String availiblityMessage(Centers centers, String date) {
         StringBuilder message = new StringBuilder();
         message.append("[").append(MessageBuilder.bold(date)).append("]").append(MessageBuilder.addLineBreak());
-        for (Center center : centers.getCenters()) {
-            message.append(MessageBuilder.bold(center.getName())).append("  ").append(center.getPincode()).append(MessageBuilder.addLineBreak());
-            for(Session session : center.getSessions()){
-                if(session.getDate().equalsIgnoreCase(date)){
-                    message.append("Capacity:").append(MessageBuilder.bold(session.getAvailable_capacity())).append(MessageBuilder.addLineBreak());
-                    message.append("Age:").append(MessageBuilder.bold(session.getMin_age_limit())).append(MessageBuilder.addLineBreak());
-                    message.append("Vaccine:").append(MessageBuilder.bold(session.getVaccine())).append(MessageBuilder.addLineBreak());
-                    break;
+        if (Objects.nonNull(centers) && Objects.nonNull(centers.getCenters()) && centers.getCenters().size() > 0) {
+            for (Center center : centers.getCenters()) {
+                message.append(MessageBuilder.bold(center.getName())).append(MessageBuilder.addLineBreak());
+                for (Session session : center.getSessions()) {
+                    if (session.getDate().equalsIgnoreCase(date)) {
+                        message.append("Capacity:").append(MessageBuilder.bold(session.getAvailable_capacity())).append(MessageBuilder.addLineBreak());
+                        message.append("Age:").append(MessageBuilder.bold(session.getMin_age_limit())).append(MessageBuilder.addLineBreak());
+                        message.append("Vaccine:").append(MessageBuilder.bold(session.getVaccine())).append(MessageBuilder.addLineBreak());
+                        break;
+                    }
                 }
+                message.append(MessageBuilder.addLineBreak());
             }
-            message.append(MessageBuilder.addLineBreak());
+        } else {
+            message.append("Not available").append(MessageBuilder.addLineBreak());
         }
         return message.toString();
     }

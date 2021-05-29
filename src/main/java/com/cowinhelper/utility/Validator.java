@@ -1,6 +1,7 @@
 package com.cowinhelper.utility;
 
 import com.cowinhelper.constants.CowinConstants;
+import com.cowinhelper.entity.User;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -41,5 +42,9 @@ public class Validator {
 
     public static boolean isEmptyString(String str){
         return null==str || "".equals(str);
+    }
+
+    public static boolean validateAgeAndPincode(User user){
+        return !Validator.isEmptyString(user.getPincode()) && user.getAge()>0;
     }
 }
