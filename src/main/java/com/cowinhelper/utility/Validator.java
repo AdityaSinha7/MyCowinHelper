@@ -22,6 +22,23 @@ public class Validator {
         }
     }
 
+    public static int validateAge(Object ageObj) throws Exception {
+        int age = 0;
+        if (ageObj instanceof Integer) {
+            age = (Integer) ageObj;
+        } else {
+            try {
+                age = Integer.parseInt((String) ageObj);
+            } catch (Exception e) {
+                throw new Exception(CowinConstants.Error.INVALID_AGE);
+            }
+        }
+        if (age < 17 || age > 90) {
+            throw new Exception(CowinConstants.Error.INVALID_AGE);
+        }
+        return age;
+    }
+
     public static boolean isEmptyString(String str){
         return null==str || "".equals(str);
     }

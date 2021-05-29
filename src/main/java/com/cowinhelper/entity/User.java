@@ -17,7 +17,7 @@ public class User {
     @Id
     private Long id;
     private String firstName;
-    private String fullName;
+    private String userName;
     private int age;
     private String vaccinePreference;
     private String pincode;

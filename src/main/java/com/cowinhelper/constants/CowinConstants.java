@@ -11,21 +11,25 @@ public interface CowinConstants {
 
     interface Error {
         String INVALID_PINCODE = "You have entered an invalid pincode";
+        String INVALID_AGE = "You have entered an invalid age";
         String INVALID_DATE = "You have entered an invalid date format.Please use DD-MM-YYYY format";
         String SOMETHING_WENT_WRONG = "Something went wrong, please try again later";
     }
 
     interface StartCommand {
-        String AVALIBLITY_CHECK = "Availiblity Check";
-        String AVALIBLITY_ALERT = "Availiblity Alert";
+        String AVALIBLITY_CHECK = "Instant Check";
+        String AVALIBLITY_ALERT = "Alert";
         String BOOK = "Book";
     }
 
     interface CallBackCommand {
-        String AVALIBLITY_CHECK = "Availiblity Check";
-        String AVALIBLITY_ALERT = "Availiblity Alert";
+        String AVALIBLITY_CHECK = "Instant Check";
+        String AVALIBLITY_ALERT = "Alert";
         String BOOK = "Book";
+    }
+    interface HandlerCacheKey{
         String GET_PINCODE = "get_pincode";
         String GET_AGE = "get_age";
+        String START_OPTIONS = "start_options";
     }
 }

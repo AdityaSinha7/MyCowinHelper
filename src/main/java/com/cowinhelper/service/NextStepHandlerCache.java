@@ -8,9 +8,9 @@ import java.util.Map;
 @Component
 public class NextStepHandlerCache {
 
-    private static Map<String, String> cache = new HashMap<>();
+    private static Map<Long, String> cache = new HashMap<>();
 
-    public String pop(String key) {
+    public String pop(Long key) {
         String data = null;
         if (cache.containsKey(key)) {
             data = cache.get(key);
@@ -19,7 +19,7 @@ public class NextStepHandlerCache {
         return data;
     }
 
-    public String peek(String key) {
+    public String peek(Long key) {
         return cache.get(key);
     }
 
@@ -27,7 +27,7 @@ public class NextStepHandlerCache {
         return cache.containsKey(key);
     }
 
-    public void push(String key, String value) {
+    public void push(Long key, String value) {
         cache.put(key, value);
     }
 }
