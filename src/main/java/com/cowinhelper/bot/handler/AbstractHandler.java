@@ -62,20 +62,4 @@ public abstract class AbstractHandler {
         }
         return null;
     }
-
-
-//    protected void addOptionsReplyKeyboard(SendMessage message) {
-//        ReplyKeyboardMarkup replyKeyboardMarkup = ReplyKeyboardMarkup.builder().build();
-//        List<KeyboardRow> keyboardRows = new ArrayList<>();
-//        KeyboardRow keyRow = new KeyboardRow() {{
-//            add(CowinConstants.StartCommonds.AVALIBLITY_CHECK);
-//            add(CowinConstants.StartCommonds.AVALIBLITY_ALERT);
-//            add(CowinConstants.StartCommonds.BOOK);
-//        }};
-//        keyboardRows.add(keyRow);
-//        replyKeyboardMarkup.setKeyboard(keyboardRows);
-//        replyKeyboardMarkup.setOneTimeKeyboard(true);
-//        message.setReplyMarkup(replyKeyboardMarkup);
-//        replyKeyboardMarkup.setResizeKeyboard(true);
-//    }
 }
