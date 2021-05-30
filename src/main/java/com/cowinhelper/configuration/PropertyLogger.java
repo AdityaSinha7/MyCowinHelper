@@ -7,12 +7,13 @@ import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MutablePropertySources;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.stream.StreamSupport;
 
 @Slf4j
-//@Component
+@Component
 public class PropertyLogger {
 
     @EventListener

@@ -24,15 +24,15 @@ public class MessageTemplates {
 
     public static String availiblityMessage(Centers centers, String date) {
         StringBuilder message = new StringBuilder();
-        message.append("[").append(MessageBuilder.bold(date)).append("]").append(MessageBuilder.addLineBreak());
+        message.append("<u>").append("[").append(MessageBuilder.bold(date)).append("]").append("</u>").append(MessageBuilder.addLineBreak());
         if (Objects.nonNull(centers) && Objects.nonNull(centers.getCenters()) && centers.getCenters().size() > 0) {
             for (Center center : centers.getCenters()) {
                 message.append(MessageBuilder.bold(center.getName())).append(MessageBuilder.addLineBreak());
                 for (Session session : center.getSessions()) {
                     if (session.getDate().equalsIgnoreCase(date)) {
-                        message.append("Capacity:").append(MessageBuilder.bold(session.getAvailable_capacity())).append(MessageBuilder.addLineBreak());
-                        message.append("Age:").append(MessageBuilder.bold(session.getMin_age_limit())).append(MessageBuilder.addLineBreak());
-                        message.append("Vaccine:").append(MessageBuilder.bold(session.getVaccine())).append(MessageBuilder.addLineBreak());
+                        message.append("Capacity:").append(session.getAvailable_capacity()).append(MessageBuilder.addLineBreak());
+                        message.append("Age:").append(session.getMin_age_limit()).append(MessageBuilder.addLineBreak());
+                        message.append("Vaccine:").append(session.getVaccine()).append(MessageBuilder.addLineBreak());
                         break;
                     }
                 }

@@ -23,33 +23,6 @@ public class CommandHandler extends AbstractHandler {
         message.setText(msg.toString());
     }
 
-//    public void startCommand(Update update, SendMessage message, String firstName, String userName) {
-//        StringBuilder msg = new StringBuilder(MessageTemplates.welcomeMessage(firstName));
-//        Long userId = Long.valueOf(message.getChatId());
-//        Optional<User> user = userRepository.findById(userId);
-//        if (!user.isPresent()) {
-//            msg.append("I will need some of your info before we can proceed").append(MessageBuilder.addLineBreak());
-//            msg.append("Please give me your ").append(MessageBuilder.bold("pincode"));
-//            User newUser = new User();
-//            newUser.setId(userId);
-//            newUser.setFirstName(firstName);
-//            newUser.setUserName(userName);
-//            userRepository.save(newUser);
-//            nextStepHandlerCache.push(userId, CowinConstants.HandlerCacheKey.GET_PINCODE);
-//        } else if (user.isPresent() && Validator.isEmptyString(user.get().getPincode())) {
-//            msg.append("Please give me your ").append(MessageBuilder.bold("PINCODE"));
-//        } else if (user.isPresent() && user.get().getAge() == 0) {
-//            msg.append("Please tell me your ").append(MessageBuilder.bold("AGE"));
-//        } else {
-//            msg.append("I remember your pincode and age.").append(MessageBuilder.addLineBreak());
-//            msg.append("PINCODE:").append(MessageBuilder.bold(user.get().getPincode())).append(" AGE:").append(MessageBuilder.bold(user.get().getAge())).append(MessageBuilder.addLineBreak());
-//            msg.append("To change your info send /delete command other choose below option to proceed");
-//            addOptionsReplyKeyboard(message);
-//        }
-//        message.setText(msg.toString());
-//        //addOptionsReplyKeyboard(message);
-//    }
-
     public void deleteCommand(User user, SendMessage message) {
         StringBuilder msg = new StringBuilder();
         userService.deleteUser(user);
@@ -80,6 +53,14 @@ public class CommandHandler extends AbstractHandler {
             msg.append("Please give me your ").append(MessageBuilder.bold("PINCODE"));
             nextStepHandlerCache.push(user.getId(), CowinConstants.HandlerCacheKey.GET_PINCODE);
         }
+        message.setText(msg.toString());
+    }
+
+    public void shareCommand(SendMessage message) {
+        StringBuilder msg = new StringBuilder();
+        //msg.append("<script async src=\"https://telegram.org/js/telegram-widget.js?15\" data-telegram-share-url=\"http://telegram.me/MyCowinHelperBot\"></script>");
+        //msg.append("http://telegram.me/MyCowinHelperBot");
+        msg.append("Share <a href=\"http://telegram.me/MyCowinHelperBot/\">Link</a>");
         message.setText(msg.toString());
     }
 }

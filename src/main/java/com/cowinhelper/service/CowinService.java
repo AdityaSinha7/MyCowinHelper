@@ -30,7 +30,7 @@ public class CowinService {
         try {
             Validator.validatePincode(pincode);
             Validator.validateDate(date);
-            String URL = MessageFormat.format(CowinConstants.ApiUrl.CALENDAR_URL_PINCODE, pincode, date);
+            String URL = MessageFormat.format(CowinConstants.ApiUrl.CALENDAR_URL_PINCODE_PUBLIC, pincode, date);
             ResponseEntity<String> responseEntity = restTemplate.exchange(URL, HttpMethod.GET, HttpUtils.buildGenericHttpEntity(), String.class);
             log.info("Response : {}", responseEntity.getBody());
             if (responseEntity.getStatusCode() == HttpStatus.OK) {

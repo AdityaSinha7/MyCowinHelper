@@ -3,6 +3,7 @@ package com.cowinhelper.constants;
 public interface CowinConstants {
     interface ApiUrl {
         String CALENDAR_URL_PINCODE = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByPin?pincode={0}&date={1}";
+        String CALENDAR_URL_PINCODE_PUBLIC="https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode={0}&date={1}";
     }
 
     interface Regex {

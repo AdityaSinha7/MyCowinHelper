@@ -27,7 +27,7 @@ public class UpdateHandler extends AbstractHandler {
     MyCowinHelperBot myCowinHelperBot;
 
     public void handleUpdate(Update update) {
-        log.info("message: {}", String.valueOf(update.getMessage()));
+        logIncomingMessgae(update);
         SendMessage message = new SendMessage();
         message.setParseMode("html");
 
@@ -62,6 +62,9 @@ public class UpdateHandler extends AbstractHandler {
             } else {
                 if (update.hasMessage() && "/delete".equalsIgnoreCase(update.getMessage().getText())) {
                     message.setText("User not registered, please send /start command to begin");
+                } else if (update.hasMessage() && "/share".equalsIgnoreCase(update.getMessage().getText())) {
+                    //get bot sharable link
+                    commandHandler.shareCommand(message);
                 }
                 //Register the new user
                 User newUser = userService.registerUser(userId, firstName, userName);
@@ -76,8 +79,6 @@ public class UpdateHandler extends AbstractHandler {
             e.printStackTrace();
         }
     }
-
-    //TODO : Add sharable link
 
     private void handleMessages(Update update, User user, SendMessage message) {
         if (CowinConstants.HandlerCacheKey.GET_PINCODE.equalsIgnoreCase(nextStepHandlerCache.peek(user.getId()))) {
@@ -94,6 +95,9 @@ public class UpdateHandler extends AbstractHandler {
         } else if ("/delete".equalsIgnoreCase(update.getMessage().getText())) {
             //delete user info from DB
             commandHandler.deleteCommand(user, message);
+        } else if ("/share".equalsIgnoreCase(update.getMessage().getText())) {
+            //get bot sharable link
+            commandHandler.shareCommand(message);
         }
     }
 
@@ -110,6 +114,16 @@ public class UpdateHandler extends AbstractHandler {
         } else if (update.hasCallbackQuery() && !Validator.validateAgeAndPincode(user)) {
             //option call but we don't have the user data
             commandHandler.fetchInfo(user, message);
+        }
+    }
+
+    private void logIncomingMessgae(Update update) {
+        if (update.hasCallbackQuery()) {
+            log.info("User:{} CallbackQuery:{} UserId:{}", update.getCallbackQuery().getFrom().getFirstName(), update.getCallbackQuery().getData(), update.getCallbackQuery().getFrom().getId());
+        } else if (update.hasMessage()) {
+            log.info("User:{} Message:{} UserId:{}", update.getMessage().getFrom().getFirstName(), update.getMessage().getText(), update.getMessage().getChatId());
+        } else {
+            log.info("Neither a callback nor a message");
         }
     }
 
